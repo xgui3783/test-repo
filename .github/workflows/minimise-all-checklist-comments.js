@@ -34,10 +34,22 @@ const query = async ({ cursor }) => {
     ...variables,
     cursor
   })
-  const {totalCount = 0, edges = [] } = resp?.data?.repository?.pullRequest?.comments || {}
+  const {totalCount = 0, edges = [] } = (() => {
+    try {
+      return resp.data.repository.pullRequest.comments
+    } catch (e) {
+      return []
+    }
+  })()
   return {
     results: edges.map(edge => edge.node),
-    cursor: edges[edges.length - 1]?.cursor,
+    cursor: (() => {
+      try {
+        return edges[edges.length - 1].cursor
+      } catch (e) {
+        return null
+      }
+    })(),
     totalCount
   }
 }
