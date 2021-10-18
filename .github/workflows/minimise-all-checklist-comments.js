@@ -38,7 +38,7 @@ module.exports = async ({github, context}) => {
     console.log(JSON.stringify(resp, null, 2))
     const {totalCount = 0, edges = [] } = (() => {
       try {
-        return resp.data.repository.pullRequest.comments
+        return resp.repository.pullRequest.comments
       } catch (e) {
         console.warn('accessor error', e)
         return {}
