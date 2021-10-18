@@ -60,7 +60,6 @@ module.exports = async ({github, context}) => {
       cursor: queryCursor,
       totalCount: queryTotalCount
     } = await query({ cursor })
-    console.log('debug:', queryResults)
     results.push(...queryResults)
     cursor = queryCursor
     totalCount = queryTotalCount
