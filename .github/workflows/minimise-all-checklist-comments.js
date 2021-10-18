@@ -67,6 +67,7 @@ module.exports = async ({github, context}) => {
 
   const commentsToMinimize = results.filter(res => res.author.login === 'github-actions' && !res.isMinimized)
 
+  console.log('debug... again', JSON.stringify(commentsToMinimize, null, 2), JSON.stringify(results, null, 2))
 
   const mutation = `mutation($minComInput: MinimizeCommentInput!) {
     minimizeComment(input: $minComInput) {
