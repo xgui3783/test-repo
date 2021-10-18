@@ -1,4 +1,4 @@
-const query = `query($owner:String!, $name:String!, $issueNumber:Number!, $cursor:String) {
+const querySpec = `query($owner:String!, $name:String!, $issueNumber:Number!, $cursor:String) {
   query($owner:String!, $name:String!, $issueNumber:Int!) {
     repository(owner: $owner, name: $name) {
       pullRequest(number: $issueNumber) {
@@ -30,7 +30,7 @@ const results = []
 let cursor, totalCount = 0
 
 const query = async ({ cursor }) => {
-  const resp = await github.graphql(query, {
+  const resp = await github.graphql(querySpec, {
     ...variables,
     cursor
   })
