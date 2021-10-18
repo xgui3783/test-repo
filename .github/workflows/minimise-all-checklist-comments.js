@@ -26,7 +26,6 @@ module.exports = async ({github, context}) => {
     name: context.repo.repo,
     issueNumber: context.issue.number,
   }
-  console.log({ variables, querySpec })
   const results = []
   let cursor, totalCount = 0
 
@@ -35,7 +34,6 @@ module.exports = async ({github, context}) => {
       ...variables,
       cursor
     })
-    console.log(JSON.stringify(resp, null, 2))
     const {totalCount = 0, edges = [] } = (() => {
       try {
         return resp.repository.pullRequest.comments
@@ -44,7 +42,6 @@ module.exports = async ({github, context}) => {
         return {}
       }
     })()
-    console.log({ totalCount, edges })
     return {
       results: edges.map(edge => edge.node),
       cursor: (() => {
@@ -70,8 +67,6 @@ module.exports = async ({github, context}) => {
   } while(!!cursor && totalCount > results.length)
 
   const commentsToMinimize = results.filter(res => res.author.login === 'github-actions' && !res.isMinimized)
-
-  console.log('debug... again', JSON.stringify(commentsToMinimize, null, 2), JSON.stringify(results, null, 2))
 
   const mutation = `mutation($minComInput: MinimizeCommentInput!) {
     minimizeComment(input: $minComInput) {
