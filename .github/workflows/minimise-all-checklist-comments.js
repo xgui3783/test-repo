@@ -1,0 +1,83 @@
+const query = `query($owner:String!, $name:String!, $issueNumber:Number!, $cursor:String) {
+  query($owner:String!, $name:String!, $issueNumber:Int!) {
+    repository(owner: $owner, name: $name) {
+      pullRequest(number: $issueNumber) {
+        title
+        comments(first:50, after: $cursor){
+          totalCount
+          edges{
+            node {
+              author{
+                login
+              }
+              bodyText,
+              isMinimized,
+              id
+            }
+            cursor
+          }
+        }
+      }
+    }
+  }
+}`
+const variables = {
+  owner: context.repo.owner,
+  name: context.repo.repo,
+  issueNumber: context.issue.number,
+}
+const results = []
+let cursor, totalCount = 0
+
+const query = async ({ cursor }) => {
+  const resp = await github.graphql(query, {
+    ...variables,
+    cursor
+  })
+  const {totalCount = 0, edges = [] } = resp?.data?.repository?.pullRequest?.comments || {}
+  return {
+    results: edges.map(edge => edge.node),
+    cursor: edges[edges.length - 1]?.cursor,
+    totalCount
+  }
+}
+
+do {
+  const {
+    result: queryResults,
+    cursor: queryCursor,
+    totalCount: queryTotalCount
+  } = await query({ cursor })
+  results.push(...queryResults)
+  cursor = queryCursor
+  totalCount = queryTotalCount
+} while(!!cursor && totalCount > results.length)
+
+const commentsToMinimize = results.filter(res => res.author.login === 'github-actions' && !res.isMinimized)
+
+
+const mutation = `mutation($minComInput: MinimizeCommentInput!) {
+  minimizeComment(input: $minComInput) {
+    clientMutationId
+    minimizedComment{
+      minimizedReason
+      viewerCanMinimize
+      isMinimized
+    }
+  }
+}`
+
+console.log(`Minimizing ${commentsToMinimize.length} previous checklist comments.`)
+
+for (const result of results) {
+  const mutationVariable = {
+    "minComInput": {
+      "subjectId": result.id,
+      "classifier": "OUTDATED",
+      "clientMutationId": "gha"
+    }
+  }
+  await github.graphql(mutation, mutationVariable)
+}
+
+

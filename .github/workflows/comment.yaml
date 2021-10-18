@@ -6,7 +6,18 @@ on:
       - master
 
 jobs:
+  hide_previous_if_exists:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/github-script@v5
+      with:
+        script: |
+          const script = require('./path/to/script.js')
+          console.log(script({github, context}))
+          
   add_e2e_checklist:
+    needs: hide_previous_if_exists
     runs-on: ubuntu-latest
 
     steps:
