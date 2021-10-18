@@ -59,10 +59,11 @@ module.exports = async ({github, context}) => {
       result: queryResults,
       cursor: queryCursor,
       totalCount: queryTotalCount
-    } = await query({ cursor })
-    results.push(...queryResults)
-    cursor = queryCursor
-    totalCount = queryTotalCount
+    } = await query({ cursor });
+    console.log('debug:', queryResults)
+    results.push(...queryResults);
+    cursor = queryCursor;
+    totalCount = queryTotalCount;
   } while(!!cursor && totalCount > results.length)
 
   const commentsToMinimize = results.filter(res => res.author.login === 'github-actions' && !res.isMinimized)
