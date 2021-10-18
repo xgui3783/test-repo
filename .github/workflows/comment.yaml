@@ -13,7 +13,7 @@ jobs:
     - uses: actions/github-script@v5
       with:
         script: |
-          const script = require('./path/to/script.js')
+          const script = require('./.github/workflows/minimise-all-checklist-comments.js')
           console.log(script({github, context}))
           
   add_e2e_checklist:
