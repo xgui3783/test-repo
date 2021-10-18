@@ -1,23 +1,21 @@
 module.exports = async ({github, context}) => {
   
-  const querySpec = `query($owner:String!, $name:String!, $issueNumber:Number!, $cursor:String) {
-    query($owner:String!, $name:String!, $issueNumber:Int!) {
-      repository(owner: $owner, name: $name) {
-        pullRequest(number: $issueNumber) {
-          title
-          comments(first:50, after: $cursor){
-            totalCount
-            edges{
-              node {
-                author{
-                  login
-                }
-                bodyText,
-                isMinimized,
-                id
+  const querySpec = `query($owner:String!, $name:String!, $issueNumber:Int!, $cursor:String) {
+    repository(owner: $owner, name: $name) {
+      pullRequest(number: $issueNumber) {
+        title
+        comments(first:50, after: $cursor){
+          totalCount
+          edges{
+            node {
+              author{
+                login
               }
-              cursor
+              bodyText,
+              isMinimized,
+              id
             }
+            cursor
           }
         }
       }
