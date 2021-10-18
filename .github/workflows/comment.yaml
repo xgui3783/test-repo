@@ -13,7 +13,7 @@ jobs:
     - uses: actions/github-script@v5
       with:
         script: |
-          const script = require('./.github/workflows/minimise-all-checklist-comments.js')
+          const script = require('./.github/workflows/code/minimise-all-checklist-comments.js')
           await script({github, context})
           
   add_e2e_checklist:
@@ -26,9 +26,5 @@ jobs:
       uses: actions/github-script@v5
       with:
         script: |
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: '👋 Thanks for reporting!'
-          })
+          const script = require('./.github/workflows/code/create-checklist-comment.js')
+          await script({github, context})
