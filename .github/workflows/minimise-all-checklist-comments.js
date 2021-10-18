@@ -35,10 +35,12 @@ module.exports = async ({github, context}) => {
       ...variables,
       cursor
     })
+    console.log({ resp })
     const {totalCount = 0, edges = [] } = (() => {
       try {
         return resp.data.repository.pullRequest.comments
       } catch (e) {
+        console.warn('accessor error', e)
         return []
       }
     })()
