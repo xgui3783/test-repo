@@ -14,7 +14,7 @@ jobs:
       with:
         script: |
           const script = require('./.github/workflows/minimise-all-checklist-comments.js')
-          console.log(script({github, context}))
+          await script({github, context})
           
   add_e2e_checklist:
     needs: hide_previous_if_exists

@@ -1,95 +1,97 @@
-const querySpec = `query($owner:String!, $name:String!, $issueNumber:Number!, $cursor:String) {
-  query($owner:String!, $name:String!, $issueNumber:Int!) {
-    repository(owner: $owner, name: $name) {
-      pullRequest(number: $issueNumber) {
-        title
-        comments(first:50, after: $cursor){
-          totalCount
-          edges{
-            node {
-              author{
-                login
+module.exports = async ({github, context}) => {
+  
+  const querySpec = `query($owner:String!, $name:String!, $issueNumber:Number!, $cursor:String) {
+    query($owner:String!, $name:String!, $issueNumber:Int!) {
+      repository(owner: $owner, name: $name) {
+        pullRequest(number: $issueNumber) {
+          title
+          comments(first:50, after: $cursor){
+            totalCount
+            edges{
+              node {
+                author{
+                  login
+                }
+                bodyText,
+                isMinimized,
+                id
               }
-              bodyText,
-              isMinimized,
-              id
+              cursor
             }
-            cursor
           }
         }
       }
     }
+  }`
+  const variables = {
+    owner: context.repo.owner,
+    name: context.repo.repo,
+    issueNumber: context.issue.number,
   }
-}`
-const variables = {
-  owner: context.repo.owner,
-  name: context.repo.repo,
-  issueNumber: context.issue.number,
-}
-const results = []
-let cursor, totalCount = 0
+  const results = []
+  let cursor, totalCount = 0
 
-const query = async ({ cursor }) => {
-  const resp = await github.graphql(querySpec, {
-    ...variables,
-    cursor
-  })
-  const {totalCount = 0, edges = [] } = (() => {
-    try {
-      return resp.data.repository.pullRequest.comments
-    } catch (e) {
-      return []
-    }
-  })()
-  return {
-    results: edges.map(edge => edge.node),
-    cursor: (() => {
+  const query = async ({ cursor }) => {
+    const resp = await github.graphql(querySpec, {
+      ...variables,
+      cursor
+    })
+    const {totalCount = 0, edges = [] } = (() => {
       try {
-        return edges[edges.length - 1].cursor
+        return resp.data.repository.pullRequest.comments
       } catch (e) {
-        return null
+        return []
       }
-    })(),
-    totalCount
-  }
-}
-
-do {
-  const {
-    result: queryResults,
-    cursor: queryCursor,
-    totalCount: queryTotalCount
-  } = await query({ cursor })
-  results.push(...queryResults)
-  cursor = queryCursor
-  totalCount = queryTotalCount
-} while(!!cursor && totalCount > results.length)
-
-const commentsToMinimize = results.filter(res => res.author.login === 'github-actions' && !res.isMinimized)
-
-
-const mutation = `mutation($minComInput: MinimizeCommentInput!) {
-  minimizeComment(input: $minComInput) {
-    clientMutationId
-    minimizedComment{
-      minimizedReason
-      viewerCanMinimize
-      isMinimized
+    })()
+    return {
+      results: edges.map(edge => edge.node),
+      cursor: (() => {
+        try {
+          return edges[edges.length - 1].cursor
+        } catch (e) {
+          return null
+        }
+      })(),
+      totalCount
     }
   }
-}`
 
-console.log(`Minimizing ${commentsToMinimize.length} previous checklist comments.`)
+  do {
+    const {
+      result: queryResults,
+      cursor: queryCursor,
+      totalCount: queryTotalCount
+    } = await query({ cursor })
+    results.push(...queryResults)
+    cursor = queryCursor
+    totalCount = queryTotalCount
+  } while(!!cursor && totalCount > results.length)
 
-for (const result of results) {
-  const mutationVariable = {
-    "minComInput": {
-      "subjectId": result.id,
-      "classifier": "OUTDATED",
-      "clientMutationId": "gha"
+  const commentsToMinimize = results.filter(res => res.author.login === 'github-actions' && !res.isMinimized)
+
+
+  const mutation = `mutation($minComInput: MinimizeCommentInput!) {
+    minimizeComment(input: $minComInput) {
+      clientMutationId
+      minimizedComment{
+        minimizedReason
+        viewerCanMinimize
+        isMinimized
+      }
     }
+  }`
+
+  console.log(`Minimizing ${commentsToMinimize.length} previous checklist comments.`)
+
+  for (const result of results) {
+    const mutationVariable = {
+      "minComInput": {
+        "subjectId": result.id,
+        "classifier": "OUTDATED",
+        "clientMutationId": "gha"
+      }
+    }
+    await github.graphql(mutation, mutationVariable)
   }
-  await github.graphql(mutation, mutationVariable)
+
 }
-
-
