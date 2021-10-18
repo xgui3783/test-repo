@@ -26,6 +26,7 @@ module.exports = async ({github, context}) => {
     name: context.repo.repo,
     issueNumber: context.issue.number,
   }
+  console.log({ variables })
   const results = []
   let cursor, totalCount = 0
 
