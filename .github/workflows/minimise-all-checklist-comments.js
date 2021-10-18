@@ -26,7 +26,7 @@ module.exports = async ({github, context}) => {
     name: context.repo.repo,
     issueNumber: context.issue.number,
   }
-  console.log({ variables })
+  console.log({ variables, querySpec })
   const results = []
   let cursor, totalCount = 0
 
@@ -35,15 +35,16 @@ module.exports = async ({github, context}) => {
       ...variables,
       cursor
     })
-    console.log({ resp })
+    console.log(JSON.stringify(resp, null, 2))
     const {totalCount = 0, edges = [] } = (() => {
       try {
         return resp.data.repository.pullRequest.comments
       } catch (e) {
         console.warn('accessor error', e)
-        return []
+        return {}
       }
     })()
+    console.log({ totalCount, edges })
     return {
       results: edges.map(edge => edge.node),
       cursor: (() => {
